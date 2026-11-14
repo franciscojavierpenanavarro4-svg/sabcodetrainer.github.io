@@ -76,11 +76,12 @@ function reset(){
   running=false;start.disabled=false;secret=[];
 }
 
-function begin(){
+function begin(keep){
+  const prev=keep?secret:null;
   reset();running=true;start.disabled=true;
   const nw=2+Math.floor(Math.random()*2); // 2 o 3 palabras
   const nn=1; /* siempre termina con un solo número */ // 1 o 2 números al final
-  secret=[...[...WORDS].sort(()=>Math.random()-.5).slice(0,nw),...[...NUMS].sort(()=>Math.random()-.5).slice(0,nn)];
+  secret=prev||[...[...WORDS].sort(()=>Math.random()-.5).slice(0,nw),...[...NUMS].sort(()=>Math.random()-.5).slice(0,nn)];
   msg.textContent="Escribe las palabras en orden (los números van al final).";
   input.disabled=false;submit.disabled=false;input.focus();
   secret.forEach((w,i)=>{
@@ -113,13 +114,16 @@ function check(){
     reset();
     msg.innerHTML=`✅ ¡Code correcto! <span class="g">${ok}</span><br>Pulsa el botón para otro.`;
   }else{
-    msg.textContent="❌ Code incorrecto, sigue intentando...";
+    const again=secret.slice();
+    reset();secret=again;start.disabled=true;
+    msg.textContent="❌ Code incorrecto. Se borró todo, mira los anuncios otra vez...";
+    later(()=>begin(true),1500);
     submit.classList.remove("shake");void submit.offsetWidth;submit.classList.add("shake");
     document.getElementById("modal").classList.remove("shake");void modal.offsetWidth;modal.classList.add("shake");
   }
 }
 
-start.addEventListener("click",begin);
+start.addEventListener("click",()=>begin(false));
 submit.addEventListener("click",check);
 input.addEventListener("keydown",e=>{if(e.key==="Enter")check()});
 </script>
