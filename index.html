@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Code Trainer – Steal a Brainrot</title>
+<style>
+:root{color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font-family:"Fredoka","Trebuchet MS",Arial,sans-serif;color:#fff;
+background:radial-gradient(circle at 30% 20%,#1d5c1d,#071a07 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;overflow:hidden}
+#announces{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;z-index:5}
+.ann{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.65);border:2px solid #39ff14;border-radius:30px;padding:6px 18px 6px 8px;font-size:18px;font-weight:700;max-width:92vw;
+max-height:60px;overflow:hidden;animation:in .25s ease-out;transition:opacity .3s,max-height .35s,padding .35s,margin .35s,border-width .35s}
+.ann .av{font-size:26px;background:#ffd23f;border-radius:50%;width:38px;height:38px;display:grid;place-items:center;flex:none}
+.ann b{color:#39ff14}
+.ann.out{opacity:0;max-height:0;padding-top:0;padding-bottom:0;border-width:0;margin-top:-8px}
+@keyframes in{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
+.modal{width:min(340px,92vw);background:#1b1b1b;border:3px solid #000;border-radius:12px;padding:22px 18px 18px;position:relative;text-align:center;box-shadow:0 8px 30px #000a}
+.modal h1{margin:0 0 10px;font-size:26px}
+.x{position:absolute;top:8px;right:8px;width:26px;height:26px;background:#c0272d;border:2px solid #000;border-radius:4px;color:#fff;font-weight:700;display:grid;place-items:center}
+.modal p{margin:0 0 14px;font-size:17px;font-weight:700}
+.g{color:#39ff14}.y{color:#ffd23f}
+input{width:100%;padding:10px;font:inherit;font-size:18px;font-weight:700;text-align:center;background:#8a8a8a;color:#000;border:2px solid #000;border-radius:4px;outline:none}
+input::placeholder{color:#222}
+input:disabled{opacity:.6}
+#submit{margin-top:14px;width:70%;padding:10px;font:inherit;font-size:20px;font-weight:700;color:#fff;background:#2ea043;border:2px solid #000;border-radius:4px;cursor:pointer}
+#submit:disabled{opacity:.5;cursor:not-allowed}
+#status{min-height:48px;text-align:center;font-weight:700;font-size:18px}
+#timer{font-size:34px;color:#ffd23f}
+#timer.low{color:#ff4d4d}
+#start{padding:12px 26px;font:inherit;font-size:20px;font-weight:700;background:#39ff14;color:#062006;border:3px solid #000;border-radius:10px;cursor:pointer}
+#start:disabled{opacity:.5;cursor:not-allowed}
+.shake{animation:sh .35s}
+@keyframes sh{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+</style>
+</head>
+<body>
+<div id="announces"></div>
+
+<div class="modal" id="modal">
+  <div class="x">X</div>
+  <h1>Codes</h1>
+  <p>Redeem any <span class="g">DLC codes</span>, or codes from <span class="y">Sammy</span> here</p>
+  <input id="code" type="text" placeholder="Code Here..." autocomplete="off" disabled>
+  <button id="submit" disabled>Submit</button>
+</div>
+
+<div id="status"><span id="msg">Pulsa el botón para empezar un code trainer.</span><div id="timer"></div></div>
+<button id="start">Iniciar code trainer</button>
+
+<script>
+const WORDS=["loot","bro","garama","riddle","dragon","sahur","steal","rich","gold","fast","noob","pro","lucky","sigma","boss","cash","sky","fire","ice","king","pizza","ninja","robot","cool","mega","epic","rizz","yeet","gem","tank"];
+const NUMS=["67","69","99","100","123","2026","7","21","404","888","1000","2"];
+const AVATARS=["🤠","😎","🧑‍🚀","🐸","👑","🔥"];
+const box=document.getElementById("announces"),input=document.getElementById("code"),
+submit=document.getElementById("submit"),start=document.getElementById("start"),
+msg=document.getElementById("msg"),timerEl=document.getElementById("timer");
+let secret=[],running=false,timeouts=[],tick=null;
+
+const norm=s=>s.toLowerCase().replace(/[^a-z0-9]/g,""); // ignora mayúsculas, espacios y símbolos
+const later=(fn,ms)=>{const t=setTimeout(fn,ms);timeouts.push(t);return t};
+
+function announce(word){
+  const d=document.createElement("div");d.className="ann";
+  d.innerHTML=`<div class="av">${AVATARS[Math.floor(Math.random()*AVATARS.length)]}</div><span><b>${word.toUpperCase()}</b></span>`;
+  box.appendChild(d); // el nuevo queda más abajo
+  later(()=>{d.classList.add("out");setTimeout(()=>d.remove(),400)},6000); // dura 6 s y los demás suben
+}
+
+function reset(){
+  timeouts.forEach(clearTimeout);timeouts=[];clearInterval(tick);
+  box.innerHTML="";timerEl.textContent="";timerEl.classList.remove("low");
+  input.value="";input.disabled=true;submit.disabled=true;
+  running=false;start.disabled=false;secret=[];
+}
+
+function begin(){
+  reset();running=true;start.disabled=true;
+  const nw=2+Math.floor(Math.random()*2); // 2 o 3 palabras
+  const nn=1; /* siempre termina con un solo número */ // 1 o 2 números al final
+  secret=[...[...WORDS].sort(()=>Math.random()-.5).slice(0,nw),...[...NUMS].sort(()=>Math.random()-.5).slice(0,nn)];
+  msg.textContent="Escribe las palabras en orden (los números van al final).";
+  input.disabled=false;submit.disabled=false;input.focus();
+  secret.forEach((w,i)=>{
+    later(()=>{
+      announce(w);
+      if(i===secret.length-1) countdown(); // última palabra dicha -> contador
+    },800+i*1800);
+  });
+}
+
+function countdown(){
+  let t=10;
+  msg.textContent="¡Última palabra! Completa el code:";
+  timerEl.textContent=t;
+  tick=setInterval(()=>{
+    t--;timerEl.textContent=t;
+    if(t<=3)timerEl.classList.add("low");
+    if(t<=0){
+      clearInterval(tick);
+      reset();
+      msg.textContent="⏰ Se acabó el tiempo. El code se borró, pulsa el botón para uno nuevo.";
+    }
+  },1000);
+}
+
+function check(){
+  if(!running)return;
+  if(norm(input.value)===norm(secret.join(" "))){
+    const ok=secret.join(" ").toUpperCase();
+    reset();
+    msg.innerHTML=`✅ ¡Code correcto! <span class="g">${ok}</span><br>Pulsa el botón para otro.`;
+  }else{
+    msg.textContent="❌ Code incorrecto, sigue intentando...";
+    submit.classList.remove("shake");void submit.offsetWidth;submit.classList.add("shake");
+    document.getElementById("modal").classList.remove("shake");void modal.offsetWidth;modal.classList.add("shake");
+  }
+}
+
+start.addEventListener("click",begin);
+submit.addEventListener("click",check);
+input.addEventListener("keydown",e=>{if(e.key==="Enter")check()});
+</script>
+</body>
+</html>
